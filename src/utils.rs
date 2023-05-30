@@ -35,7 +35,7 @@ mod tests {
   }
 }
 
-fn readfile(s: &str) -> String {
+pub fn readfile(s: &str) -> String {
   let file_result = File::open(s);
 
   let mut file = match file_result {
