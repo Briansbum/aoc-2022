@@ -1,6 +1,7 @@
-use std::cmp::Ordering;
-use std::str::FromStr;
 mod utils;
+use crate::utils::Play;
+use crate::utils::play_game;
+use std::str::FromStr;
 
 fn main() {
     println!("day1_1: {}", day1_1("src/data/day1.txt"));
@@ -64,66 +65,4 @@ fn day2_1(filename: &str) -> usize {
         .map(|l| l.split_whitespace().collect())
         .map(|v: Vec<&str>| play_game(Play::from_str(v[0]).unwrap(), Play::from_str(v[1]).unwrap()))
         .fold(0, |acc, v| acc + v)
-}
-
-fn play_game(l: Play, r: Play) -> usize {
-    match l.cmp(&r) {
-        Ordering::Equal => r as usize + 3,
-        Ordering::Greater => r as usize,
-        Ordering::Less => r as usize + 6,
-    }
-}
-
-#[derive(Eq)]
-enum Play {
-    Rock = 1,
-    Paper = 2,
-    Scissors = 3,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-struct ParsePlayError {
-    error: String,
-}
-
-impl FromStr for Play {
-    type Err = ParsePlayError;
-    fn from_str(s: &str) -> Result<Play, Self::Err> {
-        match s {
-            "A" | "X" => Ok(Play::Rock),
-            "B" | "Y" => Ok(Play::Paper),
-            "C" | "Z" => Ok(Play::Scissors),
-            _ => Err(ParsePlayError {
-                error: format!("unexpected value for s: {}", s),
-            }),
-        }
-    }
-}
-
-impl Ord for Play {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (Play::Rock, Play::Rock) => Ordering::Equal,
-            (Play::Rock, Play::Paper) => Ordering::Less,
-            (Play::Rock, Play::Scissors) => Ordering::Greater,
-            (Play::Paper, Play::Rock) => Ordering::Greater,
-            (Play::Paper, Play::Paper) => Ordering::Equal,
-            (Play::Paper, Play::Scissors) => Ordering::Less,
-            (Play::Scissors, Play::Rock) => Ordering::Less,
-            (Play::Scissors, Play::Paper) => Ordering::Greater,
-            (Play::Scissors, Play::Scissors) => Ordering::Equal,
-        }
-    }
-}
-
-impl PartialOrd for Play {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for Play {
-    fn eq(&self, other: &Self) -> bool {
-        self == other
-    }
 }
