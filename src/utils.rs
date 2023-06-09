@@ -1,57 +1,58 @@
 use core::panic;
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::Read;
-use std::cmp::Ordering;
 use std::str::FromStr;
 
 pub fn elf_snack_cals(filename: &str) -> Vec<usize> {
-  let f = readfile(filename);
-  let mut ret: Vec<usize> = vec![];
-  let mut cur: usize = 0;
-  f.lines().for_each(|l| match l {
-    "" => {
-      ret.push(cur);
-      cur = 0;
-    },
-    _ => {
-      cur = cur + match l.parse::<usize>() {
-          Ok(i) => i,
-          Err(error) => {
-            panic!("unable to parse string {:?} as usize: {:?}", l, error);
-          }
-      }
-    }
-  });
-  ret.push(cur);
-  return ret
+    let f = readfile(filename);
+    let mut ret: Vec<usize> = vec![];
+    let mut cur: usize = 0;
+    f.lines().for_each(|l| match l {
+        "" => {
+            ret.push(cur);
+            cur = 0;
+        }
+        _ => {
+            cur = cur
+                + match l.parse::<usize>() {
+                    Ok(i) => i,
+                    Err(error) => {
+                        panic!("unable to parse string {:?} as usize: {:?}", l, error);
+                    }
+                }
+        }
+    });
+    ret.push(cur);
+    return ret;
 }
 
 #[cfg(test)]
 mod tests {
     use super::elf_snack_cals;
 
-  #[test]
-  fn test_elf_snack_cals() {
-    let c = elf_snack_cals("src/fixtures/day1.txt");
-    assert_eq!(c, vec![6000, 4000, 11000, 24000, 10000]);
-  }
+    #[test]
+    fn test_elf_snack_cals() {
+        let c = elf_snack_cals("src/fixtures/day1.txt");
+        assert_eq!(c, vec![6000, 4000, 11000, 24000, 10000]);
+    }
 }
 
 pub fn readfile(s: &str) -> String {
-  let file_result = File::open(s);
+    let file_result = File::open(s);
 
-  let mut file = match file_result {
-      Ok(file) => file,
-      Err(error) => panic!("problem opening file: {:?}", error),
-  };
+    let mut file = match file_result {
+        Ok(file) => file,
+        Err(error) => panic!("problem opening file: {:?}", error),
+    };
 
-  let mut contents = String::new();
-  match file.read_to_string(&mut contents) {
-      Err(error) => panic!("cannot read file into string: {:?}", error),
-      _ => (),
-  };
+    let mut contents = String::new();
+    match file.read_to_string(&mut contents) {
+        Err(error) => panic!("cannot read file into string: {:?}", error),
+        _ => (),
+    };
 
-  return contents;
+    return contents;
 }
 
 pub fn play_game(l: Play, r: Play) -> usize {
@@ -115,3 +116,58 @@ impl PartialEq for Play {
         self == other
     }
 }
+
+pub const LETTER_VALS: [(char, usize); 52] = [
+    ('a', 1),
+    ('b', 2),
+    ('c', 3),
+    ('d', 4),
+    ('e', 5),
+    ('f', 6),
+    ('g', 7),
+    ('h', 8),
+    ('i', 9),
+    ('j', 10),
+    ('k', 11),
+    ('l', 12),
+    ('m', 13),
+    ('n', 14),
+    ('o', 15),
+    ('p', 16),
+    ('q', 17),
+    ('r', 18),
+    ('s', 19),
+    ('t', 20),
+    ('u', 21),
+    ('v', 22),
+    ('w', 23),
+    ('x', 24),
+    ('y', 25),
+    ('z', 26),
+    ('A', 27),
+    ('B', 28),
+    ('C', 29),
+    ('D', 30),
+    ('E', 31),
+    ('F', 32),
+    ('G', 33),
+    ('H', 34),
+    ('I', 35),
+    ('J', 36),
+    ('K', 37),
+    ('L', 38),
+    ('M', 39),
+    ('N', 40),
+    ('O', 41),
+    ('P', 42),
+    ('Q', 43),
+    ('R', 44),
+    ('S', 45),
+    ('T', 46),
+    ('U', 47),
+    ('V', 48),
+    ('W', 49),
+    ('X', 50),
+    ('Y', 51),
+    ('Z', 52),
+];
