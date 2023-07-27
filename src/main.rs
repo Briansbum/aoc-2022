@@ -12,6 +12,8 @@ fn main() {
     println!("day3_2: {}", day3_2("src/data/day3.txt"));
     println!("day4_1: {}", day4_1("src/data/day4.txt"));
     println!("day4_2: {}", day4_2("src/data/day4.txt"));
+    println!("day5_1: {:?}", day5_1("src/data/day5.txt"));
+    println!("day5_2: {:?}", day5_2("src/data/day5.txt"));
 }
 
 fn day1_2(filename: &str) -> usize {
@@ -201,5 +203,65 @@ fn day4_2(filename: &str) -> usize {
     }).last();
 
     return ret;
+}
+
+fn day5_1(filename: &str) -> Vec<String> {
+    let f = utils::readfile(filename);
+
+    let mut crates = utils::extract_crates(f.clone());
+
+    for line in f.lines() {
+        if !line.starts_with("move") {
+            continue
+        }
+
+        let split: Vec<&str> = line.split(" ").collect();
+        let move_count = split[1].parse::<usize>().unwrap();
+        let from = split[3].parse::<usize>().unwrap() - 1;
+        let to = split[5].parse::<usize>().unwrap() - 1;
+
+        utils::crate_mover_9000(move_count, &mut crates, from, to);
+    }
+
+    let mut out: Vec<String> = vec!{};
+    for stack in crates {
+        let s = stack.last();
+        match s {
+            Some(s) => out.push(s.clone()),
+            None => (),
+        }
+    }
+
+    return out;
+}
+
+fn day5_2(filename: &str) -> Vec<String> {
+    let f = utils::readfile(filename);
+
+    let mut crates = utils::extract_crates(f.clone());
+
+    for line in f.lines() {
+        if !line.starts_with("move") {
+            continue
+        }
+
+        let split: Vec<&str> = line.split(" ").collect();
+        let move_count = split[1].parse::<usize>().unwrap();
+        let from = split[3].parse::<usize>().unwrap() - 1;
+        let to = split[5].parse::<usize>().unwrap() - 1;
+
+        utils::crate_mover_9001(move_count, &mut crates, from, to);
+    }
+
+    let mut out: Vec<String> = vec!{};
+    for stack in crates {
+        let s = stack.last();
+        match s {
+            Some(s) => out.push(s.clone()),
+            None => (),
+        }
+    }
+
+    return out;
 }
 

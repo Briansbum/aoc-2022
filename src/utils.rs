@@ -4,6 +4,59 @@ use std::fs::File;
 use std::io::Read;
 use std::str::FromStr;
 
+pub fn extract_crates(f: String) -> Vec<Vec<String>> {
+    let mut crates: Vec<Vec<String>> = vec!{};
+    for line in f.lines() {
+        if line.starts_with(" 1") {
+            break
+        }
+        line.char_indices().map(|(i, c)| {
+            if c.is_alphabetic() {
+                while crates.len() <= i/4 {
+                    crates.push(vec!{});
+                }
+                crates[i/4].push(c.to_string());
+            }
+        }).last();
+    }
+
+    crates.iter_mut().map(|cs| {
+        cs.reverse()
+    }).last();
+    
+    return crates;
+}
+
+pub fn crate_mover_9001(count: usize, crates: &mut Vec<Vec<String>>, from: usize, to:usize) {
+    let mut i = 0;
+    let mut pickup: Vec<String> = vec!{};
+    while i < count {
+        let c = crates[from].pop();
+        match c {
+            Some(c) => pickup.push(c),
+            None => panic!("uh oh: {:?}", crates[from]),
+        }
+
+        i += 1;
+    }
+    pickup.reverse();
+    crates[to].append(&mut pickup);
+}
+
+pub fn crate_mover_9000(count: usize, crates: &mut Vec<Vec<String>>, from: usize, to:usize) {
+    let mut i = 0;
+    while i < count {
+        let c = crates[from].pop();
+        match c {
+            Some(c) => crates[to].push(c),
+            None => panic!("uh oh: {:?}", crates[from]),
+        }
+
+        i += 1;
+    }
+}
+
+
 pub fn elf_snack_cals(filename: &str) -> Vec<usize> {
     let f = readfile(filename);
     let mut ret: Vec<usize> = vec![];
