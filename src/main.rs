@@ -10,6 +10,8 @@ fn main() {
     println!("day2_2: {}", day2_2("src/data/day2.txt"));
     println!("day3_1: {}", day3_1("src/data/day3.txt"));
     println!("day3_2: {}", day3_2("src/data/day3.txt"));
+    println!("day4_1: {}", day4_1("src/data/day4.txt"));
+    println!("day4_2: {}", day4_2("src/data/day4.txt"));
 }
 
 fn day1_2(filename: &str) -> usize {
@@ -124,3 +126,80 @@ fn day3_2(filename: &str) -> usize {
         counter += 3;
     };
 }
+
+fn day4_1(filename: &str) -> usize {
+    let f = utils::readfile(filename);
+
+    let mut ret: usize = 0;
+    f.lines().filter(|line| {
+        let line_split: Vec<&str> = line.split(",").collect();
+
+        let elf1_split: Vec<&str> = line_split[0].split("-").collect();
+        let elf2_split: Vec<&str> = line_split[1].split("-").collect();
+
+        
+        let elf1_start = elf1_split[0].parse::<usize>().unwrap();
+        let elf1_end = elf1_split[1].parse::<usize>().unwrap();
+        let elf2_start = elf2_split[0].parse::<usize>().unwrap();
+        let elf2_end = elf2_split[1].parse::<usize>().unwrap();
+
+        if elf1_start <= elf2_start && elf1_end >= elf2_end {
+            return true;
+        }
+        if elf2_start <= elf1_start && elf2_end >= elf1_end {
+            return true;
+        }
+
+        return false;
+    }).map(|_| {
+        ret += 1;
+    }).last();
+
+    return ret;
+}
+
+fn day4_2(filename: &str) -> usize {
+    let f = utils::readfile(filename);
+
+    let mut ret: usize = 0;
+    f.lines().filter(|line| {
+        let line_split: Vec<&str> = line.split(",").collect();
+
+        let elf1_split: Vec<&str> = line_split[0].split("-").collect();
+        let elf2_split: Vec<&str> = line_split[1].split("-").collect();
+
+        
+        let elf1_start = elf1_split[0].parse::<usize>().unwrap();
+        let elf1_end = elf1_split[1].parse::<usize>().unwrap();
+        let elf2_start = elf2_split[0].parse::<usize>().unwrap();
+        let elf2_end = elf2_split[1].parse::<usize>().unwrap();
+
+        if elf1_start <= elf2_start && elf1_end >= elf2_end {
+            return true;
+        }
+        if elf2_start <= elf1_start && elf2_end >= elf1_end {
+            return true;
+        }
+
+        if elf1_start < elf2_start && elf1_end >= elf2_start && elf1_end < elf2_end {
+            return true
+        }
+        if elf2_start < elf1_start && elf2_end >= elf1_start && elf2_end < elf1_end {
+            return true
+        }
+
+        if elf1_end > elf2_end && elf1_start <= elf2_end && elf1_start > elf2_start {
+            return true
+        }
+        if elf2_end > elf1_end && elf2_start <= elf1_end && elf2_start > elf1_start {
+            return true
+        }
+
+        return false;
+    }).map(|_| {
+        ret += 1;
+    }).last();
+
+    return ret;
+}
+
