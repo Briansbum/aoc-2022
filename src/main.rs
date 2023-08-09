@@ -14,6 +14,8 @@ fn main() {
     println!("day4_2: {}", day4_2("src/data/day4.txt"));
     println!("day5_1: {:?}", day5_1("src/data/day5.txt"));
     println!("day5_2: {:?}", day5_2("src/data/day5.txt"));
+    println!("day6_1: {}", day6_1("src/data/day6.txt"));
+    println!("day6_2: {}", day6_2("src/data/day6.txt"));
 }
 
 fn day1_2(filename: &str) -> usize {
@@ -105,24 +107,28 @@ fn day3_1(filename: &str) -> usize {
 fn day3_2(filename: &str) -> usize {
     let f = utils::readfile(filename);
 
-    let ff = f.lines().map(|line| {
-        line.chars()
-            .map(|c| match utils::LETTER_VALS.iter().find(|lv| lv.0 == c) {
-                Some(f) => f.1,
-                None => 0,
-            }).collect::<Vec<usize>>()
-    }).collect::<Vec<Vec<usize>>>();
+    let ff = f
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match utils::LETTER_VALS.iter().find(|lv| lv.0 == c) {
+                    Some(f) => f.1,
+                    None => 0,
+                })
+                .collect::<Vec<usize>>()
+        })
+        .collect::<Vec<Vec<usize>>>();
 
     let mut counter = 0;
     let mut result = 0;
     return loop {
-        if counter >= ff.len()-1 {
-            break result
+        if counter >= ff.len() - 1 {
+            break result;
         }
         for s in &ff[counter] {
-            if ff[counter+1].contains(s) && ff[counter+2].contains(s) {
+            if ff[counter + 1].contains(s) && ff[counter + 2].contains(s) {
                 result += s;
-                break
+                break;
             }
         }
         counter += 3;
@@ -133,29 +139,31 @@ fn day4_1(filename: &str) -> usize {
     let f = utils::readfile(filename);
 
     let mut ret: usize = 0;
-    f.lines().filter(|line| {
-        let line_split: Vec<&str> = line.split(",").collect();
+    f.lines()
+        .filter(|line| {
+            let line_split: Vec<&str> = line.split(",").collect();
 
-        let elf1_split: Vec<&str> = line_split[0].split("-").collect();
-        let elf2_split: Vec<&str> = line_split[1].split("-").collect();
+            let elf1_split: Vec<&str> = line_split[0].split("-").collect();
+            let elf2_split: Vec<&str> = line_split[1].split("-").collect();
 
-        
-        let elf1_start = elf1_split[0].parse::<usize>().unwrap();
-        let elf1_end = elf1_split[1].parse::<usize>().unwrap();
-        let elf2_start = elf2_split[0].parse::<usize>().unwrap();
-        let elf2_end = elf2_split[1].parse::<usize>().unwrap();
+            let elf1_start = elf1_split[0].parse::<usize>().unwrap();
+            let elf1_end = elf1_split[1].parse::<usize>().unwrap();
+            let elf2_start = elf2_split[0].parse::<usize>().unwrap();
+            let elf2_end = elf2_split[1].parse::<usize>().unwrap();
 
-        if elf1_start <= elf2_start && elf1_end >= elf2_end {
-            return true;
-        }
-        if elf2_start <= elf1_start && elf2_end >= elf1_end {
-            return true;
-        }
+            if elf1_start <= elf2_start && elf1_end >= elf2_end {
+                return true;
+            }
+            if elf2_start <= elf1_start && elf2_end >= elf1_end {
+                return true;
+            }
 
-        return false;
-    }).map(|_| {
-        ret += 1;
-    }).last();
+            return false;
+        })
+        .map(|_| {
+            ret += 1;
+        })
+        .last();
 
     return ret;
 }
@@ -164,43 +172,45 @@ fn day4_2(filename: &str) -> usize {
     let f = utils::readfile(filename);
 
     let mut ret: usize = 0;
-    f.lines().filter(|line| {
-        let line_split: Vec<&str> = line.split(",").collect();
+    f.lines()
+        .filter(|line| {
+            let line_split: Vec<&str> = line.split(",").collect();
 
-        let elf1_split: Vec<&str> = line_split[0].split("-").collect();
-        let elf2_split: Vec<&str> = line_split[1].split("-").collect();
+            let elf1_split: Vec<&str> = line_split[0].split("-").collect();
+            let elf2_split: Vec<&str> = line_split[1].split("-").collect();
 
-        
-        let elf1_start = elf1_split[0].parse::<usize>().unwrap();
-        let elf1_end = elf1_split[1].parse::<usize>().unwrap();
-        let elf2_start = elf2_split[0].parse::<usize>().unwrap();
-        let elf2_end = elf2_split[1].parse::<usize>().unwrap();
+            let elf1_start = elf1_split[0].parse::<usize>().unwrap();
+            let elf1_end = elf1_split[1].parse::<usize>().unwrap();
+            let elf2_start = elf2_split[0].parse::<usize>().unwrap();
+            let elf2_end = elf2_split[1].parse::<usize>().unwrap();
 
-        if elf1_start <= elf2_start && elf1_end >= elf2_end {
-            return true;
-        }
-        if elf2_start <= elf1_start && elf2_end >= elf1_end {
-            return true;
-        }
+            if elf1_start <= elf2_start && elf1_end >= elf2_end {
+                return true;
+            }
+            if elf2_start <= elf1_start && elf2_end >= elf1_end {
+                return true;
+            }
 
-        if elf1_start < elf2_start && elf1_end >= elf2_start && elf1_end < elf2_end {
-            return true
-        }
-        if elf2_start < elf1_start && elf2_end >= elf1_start && elf2_end < elf1_end {
-            return true
-        }
+            if elf1_start < elf2_start && elf1_end >= elf2_start && elf1_end < elf2_end {
+                return true;
+            }
+            if elf2_start < elf1_start && elf2_end >= elf1_start && elf2_end < elf1_end {
+                return true;
+            }
 
-        if elf1_end > elf2_end && elf1_start <= elf2_end && elf1_start > elf2_start {
-            return true
-        }
-        if elf2_end > elf1_end && elf2_start <= elf1_end && elf2_start > elf1_start {
-            return true
-        }
+            if elf1_end > elf2_end && elf1_start <= elf2_end && elf1_start > elf2_start {
+                return true;
+            }
+            if elf2_end > elf1_end && elf2_start <= elf1_end && elf2_start > elf1_start {
+                return true;
+            }
 
-        return false;
-    }).map(|_| {
-        ret += 1;
-    }).last();
+            return false;
+        })
+        .map(|_| {
+            ret += 1;
+        })
+        .last();
 
     return ret;
 }
@@ -212,7 +222,7 @@ fn day5_1(filename: &str) -> Vec<String> {
 
     for line in f.lines() {
         if !line.starts_with("move") {
-            continue
+            continue;
         }
 
         let split: Vec<&str> = line.split(" ").collect();
@@ -223,7 +233,7 @@ fn day5_1(filename: &str) -> Vec<String> {
         utils::crate_mover_9000(move_count, &mut crates, from, to);
     }
 
-    let mut out: Vec<String> = vec!{};
+    let mut out: Vec<String> = vec![];
     for stack in crates {
         let s = stack.last();
         match s {
@@ -242,7 +252,7 @@ fn day5_2(filename: &str) -> Vec<String> {
 
     for line in f.lines() {
         if !line.starts_with("move") {
-            continue
+            continue;
         }
 
         let split: Vec<&str> = line.split(" ").collect();
@@ -253,7 +263,7 @@ fn day5_2(filename: &str) -> Vec<String> {
         utils::crate_mover_9001(move_count, &mut crates, from, to);
     }
 
-    let mut out: Vec<String> = vec!{};
+    let mut out: Vec<String> = vec![];
     for stack in crates {
         let s = stack.last();
         match s {
@@ -265,3 +275,53 @@ fn day5_2(filename: &str) -> Vec<String> {
     return out;
 }
 
+fn day6_1(filename: &str) -> usize {
+    let f = utils::readfile(filename)
+        .strip_suffix("\n")
+        .unwrap()
+        .to_string();
+
+    return index_of_consec_chars(f, 4).unwrap();
+}
+
+fn day6_2(filename: &str) -> usize {
+    let f = utils::readfile(filename)
+        .strip_suffix("\n")
+        .unwrap()
+        .to_string();
+
+    return index_of_consec_chars(f, 14).unwrap();
+}
+
+fn index_of_consec_chars(str: String, count: usize) -> Option<usize> {
+    let mut s: Vec<char> = vec![];
+
+    for (i, c) in str.char_indices() {
+        match s.contains(&c) {
+            true => {
+                match s[0] == c {
+                    true => {
+                        s.remove(0);
+                    }
+                    false => {
+                        let mut iter = s.split_inclusive(|ch| ch == &c);
+                        iter.next();
+                        match iter.next() {
+                            Some(n) => s = n.into(),
+                            None => s = vec![],
+                        }
+                    }
+                }
+                s.push(c);
+            }
+            false => {
+                s.push(c);
+                if s.len() == count {
+                    return Some(i + 1);
+                }
+            }
+        }
+    }
+
+    return None;
+}
