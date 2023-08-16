@@ -16,6 +16,7 @@ fn main() {
     println!("day5_2: {:?}", day5_2("src/data/day5.txt"));
     println!("day6_1: {}", day6_1("src/data/day6.txt"));
     println!("day6_2: {}", day6_2("src/data/day6.txt"));
+    println!("day7_1: {}", day7_1("src/fixtures/day7.txt"));
 }
 
 fn day1_2(filename: &str) -> usize {
@@ -324,4 +325,108 @@ fn index_of_consec_chars(str: String, count: usize) -> Option<usize> {
     }
 
     return None;
+}
+
+#[derive(Default, Debug)]
+struct ArenaTree<T>
+where
+    T: PartialEq,
+{
+    arena: Vec<Node<T>>,
+}
+
+impl<T> ArenaTree<T>
+where
+    T: PartialEq,
+{
+    fn node(&mut self, val: T, parent: usize) -> usize {
+        for node in &self.arena {
+            if node.val == val {
+                return node.idx;
+            }
+        }
+        let idx = self.arena.len();
+        self.arena.push(Node::new(idx, val, parent));
+        idx
+    }
+
+    fn child(&mut self, idx: usize, child_idx: usize) {
+        self.arena[idx].children.append(&mut vec![child_idx]);
+    }
+}
+
+#[derive(Debug)]
+struct File {
+    name: String,
+    size: usize,
+}
+
+#[derive(Debug)]
+struct Node<T>
+where
+    T: PartialEq,
+{
+    idx: usize,
+    val: T,
+    parent: usize,
+    children: Vec<usize>,
+    files: Vec<File>,
+}
+
+impl<T> Node<T>
+where
+    T: PartialEq,
+{
+    fn new(idx: usize, val: T, parent: usize) -> Self {
+        Self {
+            idx,
+            val,
+            parent,
+            children: vec![],
+            files: vec![],
+        }
+    }
+
+    fn file(&mut self, name: String, size: usize) {
+        self.files.append(&mut vec![File { name, size }]);
+    }
+}
+
+fn day7_1<'a>(filename: &str) -> usize {
+    let f = utils::readfile(filename);
+
+    let mut filetree: ArenaTree<&str> = ArenaTree::default();
+
+    let mut curr_dir = 0;
+
+    f.lines()
+        .map(|line| match line.starts_with("$") {
+            true => {
+                let mut l = line.split_whitespace();
+                l.next();
+                match l.next().unwrap() {
+                    "cd" => {
+                        curr_dir = filetree.node(l.next().unwrap(), curr_dir);
+                    }
+                    &_ => {}
+                }
+            }
+            false => match line.starts_with("dir") {
+                true => {
+                    let new_child = filetree.node(line.split_whitespace().last().unwrap(), curr_dir);
+                    filetree.child(curr_dir, new_child);
+                }
+                false => {
+                    let mut fileline = line.split_whitespace();
+                    let size = fileline.next().unwrap().parse::<usize>().unwrap();
+                    let name = fileline.next().unwrap().to_string();
+                    filetree.arena[curr_dir].file(name, size);
+                }
+            },
+        })
+        .count();
+
+    println!("{:?}", filetree);
+
+    return 0;
 }
