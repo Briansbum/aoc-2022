@@ -16,7 +16,7 @@ fn main() {
     println!("day5_2: {:?}", day5_2("src/data/day5.txt"));
     println!("day6_1: {}", day6_1("src/data/day6.txt"));
     println!("day6_2: {}", day6_2("src/data/day6.txt"));
-    println!("day7_1: {}", day7_1("src/fixtures/day7.txt"));
+    println!("day7_1: {}", day7_1("src/data/day7.txt"));
 }
 
 fn day1_2(filename: &str) -> usize {
@@ -327,17 +327,17 @@ fn index_of_consec_chars(str: String, count: usize) -> Option<usize> {
     return None;
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 struct ArenaTree<T>
 where
-    T: PartialEq,
+    T: PartialEq + Clone,
 {
     arena: Vec<Node<T>>,
 }
 
 impl<T> ArenaTree<T>
 where
-    T: PartialEq,
+    T: PartialEq + Clone,
 {
     fn node(&mut self, val: T, parent: usize) -> usize {
         for node in &self.arena {
@@ -353,18 +353,26 @@ where
     fn child(&mut self, idx: usize, child_idx: usize) {
         self.arena[idx].children.append(&mut vec![child_idx]);
     }
+
+    fn dir_sizes(self) -> Vec<(T, usize)> {
+        let mut out: Vec<(T, usize)> = vec![];
+        for node in self.arena.as_slice() {
+            out.push((node.val.clone(), node.sized(&self.arena)));
+        }
+        out
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct File {
     name: String,
     size: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Node<T>
 where
-    T: PartialEq,
+    T: PartialEq + Clone,
 {
     idx: usize,
     val: T,
@@ -375,7 +383,7 @@ where
 
 impl<T> Node<T>
 where
-    T: PartialEq,
+    T: PartialEq + Clone,
 {
     fn new(idx: usize, val: T, parent: usize) -> Self {
         Self {
@@ -390,12 +398,32 @@ where
     fn file(&mut self, name: String, size: usize) {
         self.files.append(&mut vec![File { name, size }]);
     }
+
+    fn sized(&self, arena: &Vec<Node<T>>) -> usize {
+        let files = self.files.clone();
+        let mut ret = files.into_iter().fold(0, |acc, f| acc + f.size);
+
+        for c in self.children.clone() {
+            ret += arena[c].sized(arena);
+        }
+
+        ret
+    }
 }
 
-fn day7_1<'a>(filename: &str) -> usize {
+fn day7_1(filename: &str) -> usize {
     let f = utils::readfile(filename);
 
-    let mut filetree: ArenaTree<&str> = ArenaTree::default();
+    let filetree = generate_file_tree(f);
+
+    return filetree.dir_sizes().into_iter().fold(0, |acc, (_, s)| match s <= 100000 {
+        true => acc + s,
+        false => acc,
+    });
+}
+
+fn generate_file_tree(f: String) -> ArenaTree<String> {
+    let mut filetree: ArenaTree<String> = ArenaTree::default();
 
     let mut curr_dir = 0;
 
@@ -406,14 +434,20 @@ fn day7_1<'a>(filename: &str) -> usize {
                 l.next();
                 match l.next().unwrap() {
                     "cd" => {
-                        curr_dir = filetree.node(l.next().unwrap(), curr_dir);
+                        let dir = l.next().unwrap();
+                        if dir == ".." {
+                            curr_dir = filetree.arena[curr_dir].parent;
+                        } else {
+                            curr_dir = filetree.node(dir.to_string(), curr_dir);
+                        }
                     }
                     &_ => {}
                 }
             }
             false => match line.starts_with("dir") {
                 true => {
-                    let new_child = filetree.node(line.split_whitespace().last().unwrap(), curr_dir);
+                    let new_child =
+                        filetree.node(line.split_whitespace().last().unwrap().to_string(), curr_dir);
                     filetree.child(curr_dir, new_child);
                 }
                 false => {
@@ -426,7 +460,5 @@ fn day7_1<'a>(filename: &str) -> usize {
         })
         .count();
 
-    println!("{:?}", filetree);
-
-    return 0;
+    filetree
 }
