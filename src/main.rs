@@ -339,15 +339,14 @@ impl<T> ArenaTree<T>
 where
     T: PartialEq + Clone,
 {
-    fn node(&mut self, val: T, parent: usize) -> usize {
-        for node in &self.arena {
-            if node.val == val {
-                return node.idx;
-            }
-        }
+    fn node(&mut self, val: T, parent: Option<usize>) -> usize {
         let idx = self.arena.len();
         self.arena.push(Node::new(idx, val, parent));
         idx
+    }
+
+    fn get_by_name(&mut self, val: T) -> Option<&Node<T>> {
+        self.arena.iter().filter(|n| n.val == val).last()
     }
 
     fn child(&mut self, idx: usize, child_idx: usize) {
@@ -356,9 +355,12 @@ where
 
     fn dir_sizes(self) -> Vec<(T, usize)> {
         let mut out: Vec<(T, usize)> = vec![];
-        for node in self.arena.as_slice() {
-            out.push((node.val.clone(), node.sized(&self.arena)));
-        }
+        self.arena
+            .iter()
+            .map(|n| {
+                out.push((n.val.clone(), n.sized(&self.arena)));
+            })
+            .count();
         out
     }
 }
@@ -376,7 +378,7 @@ where
 {
     idx: usize,
     val: T,
-    parent: usize,
+    parent: Option<usize>,
     children: Vec<usize>,
     files: Vec<File>,
 }
@@ -385,7 +387,7 @@ impl<T> Node<T>
 where
     T: PartialEq + Clone,
 {
-    fn new(idx: usize, val: T, parent: usize) -> Self {
+    fn new(idx: usize, val: T, parent: Option<usize>) -> Self {
         Self {
             idx,
             val,
@@ -400,14 +402,9 @@ where
     }
 
     fn sized(&self, arena: &Vec<Node<T>>) -> usize {
-        let files = self.files.clone();
-        let mut ret = files.into_iter().fold(0, |acc, f| acc + f.size);
+        let ret = self.files.iter().fold(0, |acc, f| acc + f.size);
 
-        for c in self.children.clone() {
-            ret += arena[c].sized(arena);
-        }
-
-        ret
+        return ret + self.children.iter().fold(0, |acc, c| acc + arena[*c].sized(arena));
     }
 }
 
@@ -416,10 +413,15 @@ fn day7_1(filename: &str) -> usize {
 
     let filetree = generate_file_tree(f);
 
-    return filetree.dir_sizes().into_iter().fold(0, |acc, (_, s)| match s <= 100000 {
-        true => acc + s,
-        false => acc,
-    });
+    println!("{:?}", filetree);
+
+    return filetree
+        .dir_sizes()
+        .iter()
+        .fold(0, |acc, (_, s)| match *s <= 100000 as usize {
+            true => acc + s,
+            false => acc,
+        });
 }
 
 fn generate_file_tree(f: String) -> ArenaTree<String> {
@@ -435,19 +437,33 @@ fn generate_file_tree(f: String) -> ArenaTree<String> {
                 match l.next().unwrap() {
                     "cd" => {
                         let dir = l.next().unwrap();
-                        if dir == ".." {
-                            curr_dir = filetree.arena[curr_dir].parent;
-                        } else {
-                            curr_dir = filetree.node(dir.to_string(), curr_dir);
+                        match dir {
+                            ".." => {
+                                match filetree.arena[curr_dir].parent {
+                                    Some(idx) => curr_dir = idx,
+                                    None => panic!("expected parent but got None"),
+                                }
+                            }
+                            "/" => {
+                                filetree.node(dir.to_string(), Some(curr_dir));
+                            }
+                            _ => {
+                                match filetree.get_by_name(dir.to_string()) {
+                                    Some(node) => curr_dir = node.idx,
+                                    None => panic!("trying to cd to unknown dir {}", dir),
+                                };
+                            }
                         }
                     }
-                    &_ => {}
+                    _ => {}
                 }
             }
             false => match line.starts_with("dir") {
                 true => {
-                    let new_child =
-                        filetree.node(line.split_whitespace().last().unwrap().to_string(), curr_dir);
+                    let new_child = filetree.node(
+                        line.split_whitespace().last().unwrap().to_string(),
+                        Some(curr_dir),
+                    );
                     filetree.child(curr_dir, new_child);
                 }
                 false => {
