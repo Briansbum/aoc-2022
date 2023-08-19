@@ -345,8 +345,8 @@ where
         idx
     }
 
-    fn get_by_name(&mut self, val: T) -> Option<&Node<T>> {
-        self.arena.iter().filter(|n| n.val == val).last()
+    fn get_by_name(&mut self, val: T, parent: usize) -> Option<&Node<T>> {
+        self.arena.iter().filter(|n| n.parent == Some(parent)).filter(|n| n.val == val).last()
     }
 
     fn child(&mut self, idx: usize, child_idx: usize) {
@@ -413,8 +413,6 @@ fn day7_1(filename: &str) -> usize {
 
     let filetree = generate_file_tree(f);
 
-    println!("{:?}", filetree);
-
     return filetree
         .dir_sizes()
         .iter()
@@ -448,7 +446,7 @@ fn generate_file_tree(f: String) -> ArenaTree<String> {
                                 filetree.node(dir.to_string(), Some(curr_dir));
                             }
                             _ => {
-                                match filetree.get_by_name(dir.to_string()) {
+                                match filetree.get_by_name(dir.to_string(), curr_dir) {
                                     Some(node) => curr_dir = node.idx,
                                     None => panic!("trying to cd to unknown dir {}", dir),
                                 };
