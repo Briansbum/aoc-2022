@@ -1,8 +1,181 @@
 use core::panic;
 use std::cmp::Ordering;
-use std::fs::File;
+use std::fs::File as fs_file;
 use std::io::Read;
 use std::str::FromStr;
+
+pub fn index_of_consec_chars(str: String, count: usize) -> Option<usize> {
+    let mut s: Vec<char> = vec![];
+
+    for (i, c) in str.char_indices() {
+        match s.contains(&c) {
+            true => {
+                match s[0] == c {
+                    true => {
+                        s.remove(0);
+                    }
+                    false => {
+                        let mut iter = s.split_inclusive(|ch| ch == &c);
+                        iter.next();
+                        match iter.next() {
+                            Some(n) => s = n.into(),
+                            None => s = vec![],
+                        }
+                    }
+                }
+                s.push(c);
+            }
+            false => {
+                s.push(c);
+                if s.len() == count {
+                    return Some(i + 1);
+                }
+            }
+        }
+    }
+
+    return None;
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct ArenaTree<T>
+where
+    T: PartialEq + Clone,
+{
+   pub arena: Vec<Node<T>>,
+}
+
+impl<T> ArenaTree<T>
+where
+    T: PartialEq + Clone,
+{
+    fn node(&mut self, val: T, parent: Option<usize>) -> usize {
+        let idx = self.arena.len();
+        self.arena.push(Node::new(idx, val, parent));
+        idx
+    }
+
+    fn get_by_name(&mut self, val: T, parent: usize) -> Option<&Node<T>> {
+        self.arena
+            .iter()
+            .filter(|n| n.parent == Some(parent))
+            .filter(|n| n.val == val)
+            .last()
+    }
+
+    fn child(&mut self, idx: usize, child_idx: usize) {
+        self.arena[idx].children.append(&mut vec![child_idx]);
+    }
+
+    pub fn dir_sizes(self) -> Vec<(T, usize)> {
+        let mut out: Vec<(T, usize)> = vec![];
+        self.arena
+            .iter()
+            .map(|n| {
+                out.push((n.val.clone(), n.sized(&self.arena)));
+            })
+            .count();
+        out
+    }
+}
+
+#[derive(Debug, Clone)]
+struct File {
+    size: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct Node<T>
+where
+    T: PartialEq + Clone,
+{
+    idx: usize,
+    val: T,
+    parent: Option<usize>,
+    children: Vec<usize>,
+    files: Vec<File>,
+}
+
+impl<T> Node<T>
+where
+    T: PartialEq + Clone,
+{
+    fn new(idx: usize, val: T, parent: Option<usize>) -> Self {
+        Self {
+            idx,
+            val,
+            parent,
+            children: vec![],
+            files: vec![],
+        }
+    }
+
+    fn file(&mut self, size: usize) {
+        self.files.append(&mut vec![File { size }]);
+    }
+
+    pub fn sized(&self, arena: &Vec<Node<T>>) -> usize {
+        let ret = self.files.iter().fold(0, |acc, f| acc + f.size);
+
+        return ret
+            + self
+                .children
+                .iter()
+                .fold(0, |acc, c| acc + arena[*c].sized(arena));
+    }
+}
+
+pub fn generate_file_tree(f: String) -> ArenaTree<String> {
+    let mut filetree: ArenaTree<String> = ArenaTree::default();
+
+    let mut curr_dir = 0;
+
+    f.lines()
+        .map(|line| match line.starts_with("$") {
+            true => {
+                let mut l = line.split_whitespace();
+                l.next();
+                match l.next().unwrap() {
+                    "cd" => {
+                        let dir = l.next().unwrap();
+                        match dir {
+                            ".." => match filetree.arena[curr_dir].parent {
+                                Some(idx) => curr_dir = idx,
+                                None => panic!("expected parent but got None"),
+                            },
+                            "/" => {
+                                filetree.node(dir.to_string(), Some(curr_dir));
+                            }
+                            _ => {
+                                match filetree.get_by_name(dir.to_string(), curr_dir) {
+                                    Some(node) => curr_dir = node.idx,
+                                    None => panic!("trying to cd to unknown dir {}", dir),
+                                };
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            false => match line.starts_with("dir") {
+                true => {
+                    let new_child = filetree.node(
+                        line.split_whitespace().last().unwrap().to_string(),
+                        Some(curr_dir),
+                    );
+                    filetree.child(curr_dir, new_child);
+                }
+                false => {
+                    let mut fileline = line.split_whitespace();
+                    let size = fileline.next().unwrap().parse::<usize>().unwrap();
+                    filetree.arena[curr_dir].file(size);
+                }
+            },
+        })
+        .count();
+
+    filetree
+}
 
 pub fn extract_crates(f: String) -> Vec<Vec<String>> {
     let mut crates: Vec<Vec<String>> = vec!{};
@@ -92,7 +265,7 @@ mod tests {
 }
 
 pub fn readfile(s: &str) -> String {
-    let file_result = File::open(s);
+    let file_result = fs_file::open(s);
 
     let mut file = match file_result {
         Ok(file) => file,
