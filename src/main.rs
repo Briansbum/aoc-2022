@@ -18,6 +18,7 @@ fn main() {
     println!("day6_2: {}", day6_2("src/data/day6.txt"));
     println!("day7_1: {}", day7_1("src/data/day7.txt"));
     println!("day7_2: {}", day7_2("src/data/day7.txt"));
+    println!("day8_1: {}", day8_1("src/fixtures/day8.txt"));
 }
 
 fn day1_2(filename: &str) -> usize {
@@ -316,23 +317,108 @@ fn day7_2(filename: &str) -> usize {
 
     let unused = 70000000 - filetree.arena[0].sized(&filetree.arena);
 
-    let mut dir_size: usize = 70000000;
-
     filetree
         .arena
         .iter()
         .filter(|n| n.sized(&filetree.arena) + unused >= 30000000)
-        .map(|n| {
+        .fold(70000000, |acc, n| {
             let n_size = n.sized(&filetree.arena);
-            match n_size < dir_size {
-                true => {
-                    dir_size = n_size;
-                }
-                false => {}
+            match n_size < acc {
+                true => n_size,
+                false => acc,
             }
+        })
+}
+
+#[derive(Debug)]
+struct TreeSquare {
+    rows: Vec<Vec<u32>>,
+}
+
+impl TreeSquare {
+    fn new() -> TreeSquare {
+        Self { rows: vec![] }
+    }
+
+    fn visible_right(&self, x: usize, y: usize) -> bool {
+        self.rows[y][(x + 1)..=(self.rows[y].len() - 1)]
+            .iter()
+            .fold(0, |acc, t| match self.rows[y][x].lt(t) {
+                true => acc + 1,
+                false => 0,
+            })
+            > 0
+    }
+
+    fn visible_left(&self, x: usize, y: usize) -> bool {
+        self.rows[y][0..=(x - 1)]
+            .iter()
+            .fold(0, |acc, t| match self.rows[y][x].lt(t) {
+                true => acc + 1,
+                false => 0,
+            })
+            > 0
+    }
+
+    fn visible_updown(&self, x: usize, y: usize) -> bool {
+        self.rows
+            .iter()
+            .fold(0, |acc, r| match self.rows[y][x].lt(&r[x]) {
+                true => acc + 1,
+                false => 0,
+            })
+            > 0
+    }
+
+    fn count_visible(self) -> usize {
+        self.rows.iter().enumerate().fold(0, |acc, (y, row)| {
+            acc + row.iter().enumerate().fold(0, |acc, (x, _)| {
+                match x == 0 || y == 0 || x == (row.len() - 1) || y == (self.rows.len() - 1) {
+                    true => {
+                        println!("{}, {}", x, y);
+                        acc + 1
+                    }
+                    false => {
+                        match self.visible_updown(x, y)
+                            || self.visible_left(x, y)
+                            || self.visible_right(x, y)
+                        {
+                            true => {
+                                println!("{}, {}", x, y);
+                                acc + 1
+                            }
+                            false => acc,
+                        }
+                    }
+                }
+            })
+        })
+    }
+}
+
+fn day8_1(filename: &str) -> usize {
+    let f = utils::readfile(filename);
+
+    // read the file line by line and parse into a grid-like data structure.
+    // list of lists sounds right
+    // make it a type so that we can put methods on it
+    let mut ts: TreeSquare = TreeSquare::new();
+
+    f.lines()
+        .enumerate()
+        .map(|(idx, line)| {
+            line.chars()
+                .map(|t| {
+                    if ts.rows.len() == idx {
+                        ts.rows.push(vec![]);
+                    }
+                    ts.rows[idx].push(t.to_digit(10).unwrap())
+                })
+                .count();
         })
         .count();
 
-    return dir_size;
-}
+    println!("{:?}", ts);
 
+    return ts.count_visible();
+}
