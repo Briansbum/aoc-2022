@@ -341,13 +341,20 @@ impl TreeSquare {
     }
 
     fn visible_right(&self, x: usize, y: usize) -> bool {
-        self.rows[y][(x + 1)..=(self.rows[y].len() - 1)]
+        match self.rows[y][(x + 1)..=(self.rows[y].len() - 1)]
             .iter()
             .fold(0, |acc, t| match self.rows[y][x].lt(t) {
                 true => acc + 1,
                 false => 0,
             })
             > 0
+        {
+            true => {
+                println!("{}, {} visible from the right", x, y);
+                true
+            }
+            false => false,
+        }
     }
 
     fn visible_left(&self, x: usize, y: usize) -> bool {
